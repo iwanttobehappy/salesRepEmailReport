@@ -139,7 +139,7 @@ for row in reportReader:
 	if row[0]=='PID':
 		TestType=getTestType(row[3])
 		SignOffDirector=getDirector(TestType)
-	if row[0]=='FT1' and not row[7].isdigit():
+	if row[0]=='FT1' and not row[7].isdigit() and row[7].find('-')==-1:
 		Test=getTest(row[7])
 		TAT=computeTAT(row[4],row[5])
 
