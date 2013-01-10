@@ -4,6 +4,7 @@ import string
 from datetime import date
 import datetime
 import re
+import argparse
 
 def getDoctor(docName):
 	docName=re.sub("\d+",'',docName)
@@ -58,6 +59,7 @@ def makeDateObj(datestr):
 	return datetime.date(year,month,day)
 
 	
+	
 def splitDocName(dn):
 	tmp=dn.split(";")
 	dn=tmp[1]+tmp[0]
@@ -78,6 +80,29 @@ def getSalesRep(doc):
 	return "No Sales Rep found for "+doc
 	
 
+docToPractice=""
+docToSales=""
+hl7file=""	
+searchSalesRep=""
+searchPractice=""
+parser=argparse.ArgumentParser(description="salesEmail.py allows us to filter hl7 files into reports")
+parser.add_argument('-p',action="store",dest="docToPractice")
+parser.add_argument('-s',action="store",dest="docToSales")
+parser.add_argument('-f',action="store", dest="hl7file")
+parser.add_argument('--salesrep',action="store",dest="searchSalesRep" ,default=None)
+parser.add_argument('--practice',action="store",dest="searchPractice",default=None)
+
+
+
+results=parser.parse_args()
+docToPractice=results.docToPractice
+docToSales=results.docToSales
+hl7file=results.hl7file
+searchSalesRep=results.searchSalesRep
+searchPractice=results.searchPractice
+
+
+'''	
 if len(sys.argv)== 4:
 	hl7file=sys.argv[1]
 	docToPractice=sys.argv[2]
@@ -88,7 +113,7 @@ else:
 	print "USAGE: salesEmail.py <hl7 file> <docToPractice_csv> <docToSales.csv>"
 	print "bye bye"
 	sys.exit()
-
+'''
 	
 	
 # maps the doctors to practices	
@@ -126,14 +151,33 @@ SalesRep=""
 SignOffDirector=""
 for row in reportReader:
 	if row[0]=='MSH' and TestType != "":
-		print "Test Type: "+TestType
-		print "Test: "+Test
-		print "TAT :"+str(TAT)
-		print "Doctor :"+Physician
-		print "Practice :"+getPracFromDoc(Physician)
-		print "Sales Rep :"+getSalesRep(Physician)
-		print "Signed Off By :"+SignOffDirector
-		print
+		if searchSalesRep != None and searchSalesRep==getSalesRep(Physician) and searchPractice==None:
+			print "Test Type: "+TestType
+			print "Test: "+Test
+			print "TAT :"+str(TAT)
+			print "Doctor :"+Physician
+			print "Practice :"+getPracFromDoc(Physician)
+			print "Sales Rep :"+getSalesRep(Physician)
+			print "Signed Off By :"+SignOffDirector
+			print
+		if searchPractice != None and searchPractice==getPracFromDoc(Physician) and searchSalesRep==None:
+			print "Test Type: "+TestType
+			print "Test: "+Test
+			print "TAT :"+str(TAT)
+			print "Doctor :"+Physician
+			print "Practice :"+getPracFromDoc(Physician)
+			print "Sales Rep :"+getSalesRep(Physician)
+			print "Signed Off By :"+SignOffDirector
+			print
+		if searchSalesRep==None and searchPractice==None:
+			print "Test Type: "+TestType
+			print "Test: "+Test
+			print "TAT :"+str(TAT)
+			print "Doctor :"+Physician
+			print "Practice :"+getPracFromDoc(Physician)
+			print "Sales Rep :"+getSalesRep(Physician)
+			print "Signed Off By :"+SignOffDirector
+			print
 	if row[0]=='PV1':
 		Physician=getDoctor(row[7])
 	if row[0]=='PID':
@@ -142,7 +186,6 @@ for row in reportReader:
 	if row[0]=='FT1' and not row[7].isdigit() and row[7].find('-')==-1:
 		Test=getTest(row[7])
 		TAT=computeTAT(row[4],row[5])
-
 
 
 
