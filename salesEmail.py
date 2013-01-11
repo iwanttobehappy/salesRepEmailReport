@@ -78,7 +78,17 @@ def getSalesRep(doc):
 		if k==doc:
 			return v
 	return "No Sales Rep found for "+doc
-	
+
+
+def printReportEntry(Test,TestType,TAT,Physician,SignOffDirector):
+	print "Test Type: "+TestType
+	print "Test: "+Test
+	print "TAT :"+str(TAT)
+	print "Doctor :"+Physician
+	print "Practice :"+getPracFromDoc(Physician)
+	print "Sales Pro :"+getSalesRep(Physician)
+	print "Signed Off By :"+SignOffDirector
+	print	
 
 docToPractice=""
 docToSales=""
@@ -102,19 +112,6 @@ searchSalesRep=results.searchSalesRep
 searchPractice=results.searchPractice
 
 
-'''	
-if len(sys.argv)== 4:
-	hl7file=sys.argv[1]
-	docToPractice=sys.argv[2]
-	docToSales=sys.argv[3]
-
-	
-else:
-	print "USAGE: salesEmail.py <hl7 file> <docToPractice_csv> <docToSales.csv>"
-	print "bye bye"
-	sys.exit()
-'''
-	
 	
 # maps the doctors to practices	
 rr=csv.reader(open(docToPractice,'rb'),delimiter=',',quotechar='\'')
@@ -133,12 +130,7 @@ for r in rs:
 	docToSalesRep[splitDocName(r[0])]=r[1]
 	
 	
-	
-	
-	
-	
 
-	
 	
 reportReader=csv.reader(open(hl7file,'rU'),delimiter='|',quotechar='\'')
 OrderingSite=""
@@ -152,32 +144,11 @@ SignOffDirector=""
 for row in reportReader:
 	if row[0]=='MSH' and TestType != "":
 		if searchSalesRep != None and searchSalesRep==getSalesRep(Physician) and searchPractice==None:
-			print "Test Type: "+TestType
-			print "Test: "+Test
-			print "TAT :"+str(TAT)
-			print "Doctor :"+Physician
-			print "Practice :"+getPracFromDoc(Physician)
-			print "Sales Rep :"+getSalesRep(Physician)
-			print "Signed Off By :"+SignOffDirector
-			print
+			printReportEntry(Test,TestType,TAT,Physician,SignOffDirector)
 		if searchPractice != None and searchPractice==getPracFromDoc(Physician) and searchSalesRep==None:
-			print "Test Type: "+TestType
-			print "Test: "+Test
-			print "TAT :"+str(TAT)
-			print "Doctor :"+Physician
-			print "Practice :"+getPracFromDoc(Physician)
-			print "Sales Rep :"+getSalesRep(Physician)
-			print "Signed Off By :"+SignOffDirector
-			print
+			printReportEntry(Test,TestType,TAT,Physician,SignOffDirector)
 		if searchSalesRep==None and searchPractice==None:
-			print "Test Type: "+TestType
-			print "Test: "+Test
-			print "TAT :"+str(TAT)
-			print "Doctor :"+Physician
-			print "Practice :"+getPracFromDoc(Physician)
-			print "Sales Rep :"+getSalesRep(Physician)
-			print "Signed Off By :"+SignOffDirector
-			print
+			printReportEntry(Test,TestType,TAT,Physician,SignOffDirector)
 	if row[0]=='PV1':
 		Physician=getDoctor(row[7])
 	if row[0]=='PID':
