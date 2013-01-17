@@ -2,9 +2,23 @@ import sys
 import csv
 import string
 from datetime import date
+from time import strptime
 import datetime
 import re
 import argparse
+
+
+def redoDate(date):
+	date=strptime(date,"%m/%d/%Y")
+	year=date.tm_year
+	month=date.tm_mon
+	if len(str(month)) != 2:
+		month="0"+str(month)
+	day=date.tm_mday
+	if len(str(day)) != 2:
+		day="0"+str(day)
+	date=str(year)+str(month)+str(day)
+	return date
 
 def getDoctor(docName):
 	docName=re.sub("\d+",'',docName)
@@ -78,6 +92,13 @@ def getSalesRep(doc):
 		if k==doc:
 			return v
 	return "No Sales Rep found for "+doc
+	
+def searchForAddOn(case):
+	global adt
+	for k,v in adt.items():
+		if k in case:
+			return v
+	return None
 
 
 def printReportEntry(Test,TestType,TAT,Physician,SignOffDirector):
@@ -95,12 +116,14 @@ docToSales=""
 hl7file=""	
 searchSalesRep=""
 searchPractice=""
-parser=argparse.ArgumentParser(description="salesEmail.py allows us to filter hl7 files into reports")
+addOn=""
+parser=argparse.ArgumentParser(description="salesEmail.py allows us to filter hl7 files into reports.  ")
 parser.add_argument('-p',action="store",dest="docToPractice")
 parser.add_argument('-s',action="store",dest="docToSales")
 parser.add_argument('-f',action="store", dest="hl7file")
 parser.add_argument('--salesrep',action="store",dest="searchSalesRep" ,default=None)
 parser.add_argument('--practice',action="store",dest="searchPractice",default=None)
+parser.add_argument('--addon',action="store",dest="addOn",default=None)
 
 
 
@@ -110,6 +133,7 @@ docToSales=results.docToSales
 hl7file=results.hl7file
 searchSalesRep=results.searchSalesRep
 searchPractice=results.searchPractice
+addOn=results.addOn
 
 
 	
@@ -128,6 +152,15 @@ rs.next()
 docToSalesRep=dict()
 for r in rs:
 	docToSalesRep[splitDocName(r[0])]=r[1]
+
+#if there are Add On Cases for that day then update	
+adt=dict()
+if addOn != None:
+	rr=csv.reader(open(addOn,'rb'),delimiter=',',quotechar='\'')
+	rr.next()
+	for r in rr:
+		if r[1] !='':
+			adt[r[0]]=redoDate(r[1])
 	
 	
 
@@ -141,6 +174,7 @@ Physician=""
 Practice=""
 SalesRep=""
 SignOffDirector=""
+CaseNumber=""
 for row in reportReader:
 	if row[0]=='MSH' and TestType != "":
 		if searchSalesRep != None and searchSalesRep==getSalesRep(Physician) and searchPractice==None:
@@ -154,10 +188,23 @@ for row in reportReader:
 	if row[0]=='PID':
 		TestType=getTestType(row[3])
 		SignOffDirector=getDirector(TestType)
+		CaseNumber=row[3]
+		print CaseNumber
 	if row[0]=='FT1' and not row[7].isdigit() and row[7].find('-')==-1:
 		Test=getTest(row[7])
-		TAT=computeTAT(row[4],row[5])
-
+		dateOfAddOn=searchForAddOn(CaseNumber)
+		if dateOfAddOn==None:
+			TAT=computeTAT(row[4],row[5])
+		else:
+			TAT=computeTAT(dateOfAddOn,row[5])
+		
+if searchSalesRep != None and searchSalesRep==getSalesRep(Physician) and searchPractice==None:
+	printReportEntry(Test,TestType,TAT,Physician,SignOffDirector)
+if searchPractice != None and searchPractice==getPracFromDoc(Physician) and searchSalesRep==None:
+	printReportEntry(Test,TestType,TAT,Physician,SignOffDirector)
+if searchSalesRep==None and searchPractice==None:
+	printReportEntry(Test,TestType,TAT,Physician,SignOffDirector)
+	
 
 
 	
