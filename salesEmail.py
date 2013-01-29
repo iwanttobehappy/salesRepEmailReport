@@ -72,6 +72,14 @@ def makeDateObj(datestr):
 	day=int(day)
 	return datetime.date(year,month,day)
 
+def formatDate(datestr):
+	year=datestr[0:4]
+	month=datestr[4:6]
+	day=datestr[6:8]
+	year=int(year)
+	month=int(month)
+	day=int(day)
+	return str(month)+"/"+str(day)+"/"+str(year)
 	
 	
 def splitDocName(dn):
@@ -100,11 +108,16 @@ def searchForAddOn(case):
 			return v
 	return None
 
+	
 
-def printReportEntry(Test,TestType,TAT,Physician,SignOffDirector):
+
+def printReportEntry(Test,TestType,TAT,Physician,SignOffDirector,dos,isAddOn):
 	print "Test Type: "+TestType
 	print "Test: "+Test
 	print "TAT :"+str(TAT)
+	print "Specimin Receive Date :"+dos
+	if isAddOn==True:
+		print "This is an Add On Test"
 	print "Doctor :"+Physician
 	print "Practice :"+getPracFromDoc(Physician)
 	print "Sales Pro :"+getSalesRep(Physician)
@@ -175,35 +188,40 @@ Practice=""
 SalesRep=""
 SignOffDirector=""
 CaseNumber=""
+isAddOn=False
+speciminReceiveDate=""
 for row in reportReader:
 	if row[0]=='MSH' and TestType != "":
 		if searchSalesRep != None and searchSalesRep==getSalesRep(Physician) and searchPractice==None:
-			printReportEntry(Test,TestType,TAT,Physician,SignOffDirector)
+			printReportEntry(Test,TestType,TAT,Physician,SignOffDirector,speciminReceiveDate,isAddOn)
 		if searchPractice != None and searchPractice==getPracFromDoc(Physician) and searchSalesRep==None:
-			printReportEntry(Test,TestType,TAT,Physician,SignOffDirector)
+			printReportEntry(Test,TestType,TAT,Physician,SignOffDirector,speciminReceiveDate,isAddOn)
 		if searchSalesRep==None and searchPractice==None:
-			printReportEntry(Test,TestType,TAT,Physician,SignOffDirector)
+			printReportEntry(Test,TestType,TAT,Physician,SignOffDirector,speciminReceiveDate,isAddOn)
 	if row[0]=='PV1':
 		Physician=getDoctor(row[7])
 	if row[0]=='PID':
 		TestType=getTestType(row[3])
 		SignOffDirector=getDirector(TestType)
 		CaseNumber=row[3]
-		print CaseNumber
+		#print CaseNumber
 	if row[0]=='FT1' and not row[7].isdigit() and row[7].find('-')==-1:
 		Test=getTest(row[7])
 		dateOfAddOn=searchForAddOn(CaseNumber)
+		speciminReceiveDate=formatDate(row[4])
 		if dateOfAddOn==None:
 			TAT=computeTAT(row[4],row[5])
+			isAddOn=False
 		else:
 			TAT=computeTAT(dateOfAddOn,row[5])
+			isAddOn=True
 		
 if searchSalesRep != None and searchSalesRep==getSalesRep(Physician) and searchPractice==None:
-	printReportEntry(Test,TestType,TAT,Physician,SignOffDirector)
+	printReportEntry(Test,TestType,TAT,Physician,SignOffDirector,speciminReceiveDate,isAddOn)
 if searchPractice != None and searchPractice==getPracFromDoc(Physician) and searchSalesRep==None:
-	printReportEntry(Test,TestType,TAT,Physician,SignOffDirector)
+	printReportEntry(Test,TestType,TAT,Physician,SignOffDirector,speciminReceiveDate,isAddOn)
 if searchSalesRep==None and searchPractice==None:
-	printReportEntry(Test,TestType,TAT,Physician,SignOffDirector)
+	printReportEntry(Test,TestType,TAT,Physician,SignOffDirector,speciminReceiveDate,isAddOn)
 	
 
 
